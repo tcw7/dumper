@@ -92,41 +92,48 @@ run_test "Help display (-h)" "$SCRIPT -h" 0
 run_test "Non-existent directory" "$SCRIPT /nonexistent" 1
 
 # Test 4: Basic dump (current directory)
-run_test "Basic dump current directory" "$SCRIPT ." 0
-verify_file "dump.txt" 10 "Output file created with content"
+run_test "Basic dump current directory" "echo 'y' | $SCRIPT ." 0
+verify_file "$TMPDIR/dump.txt" 10 "Output file created in temp directory"
 
 # Test 5: Custom output filename
-run_test "Custom output filename" "$SCRIPT . custom-output.txt" 0
+run_test "Custom output filename" "echo 'y' | $SCRIPT . custom-output.txt" 0
 verify_file "custom-output.txt" 10 "Custom output file created"
 
 # Test 6: File type filtering
-run_test "Filter .txt files only" "$SCRIPT $TEST_DIR filtered-output.txt .txt" 0
+run_test "Filter .txt files only" "echo 'y' | $SCRIPT $TEST_DIR filtered-output.txt .txt" 0
 verify_file "filtered-output.txt" 5 "Filtered output contains text files"
 
 # Test 7: Multiple file type filtering
-run_test "Filter multiple file types" "$SCRIPT $TEST_DIR multi-filtered.txt .txt .py" 0
+run_test "Filter multiple file types" "echo 'y' | $SCRIPT $TEST_DIR multi-filtered.txt .txt .py" 0
 verify_file "multi-filtered.txt" 8 "Multi-type filtered output"
 
 # Test 8: Test with test data directory
-run_test "Test data directory processing" "$SCRIPT $TEST_DIR test-data-output.txt" 0
+run_test "Test data directory processing" "echo 'y' | $SCRIPT $TEST_DIR test-data-output.txt" 0
 verify_file "test-data-output.txt" 3 "Test data processed correctly"
+
+# Test 9: User cancellation (answer 'n' to prompt)
+run_test "User cancellation" "echo 'n' | $SCRIPT $TEST_DIR" 0
+
+# Test 10: Default temp directory output
+run_test "Default temp directory" "echo 'y' | $SCRIPT $TEST_DIR" 0
+verify_file "$TMPDIR/dump.txt" 3 "Dump created in temp directory by default"
 
 echo -e "\n${YELLOW}=== Content Verification Tests ===${NC}"
 
-# Test 9: Verify file headers are present
+# Test 11: Verify file headers are present
 ((TOTAL++))
 echo -e "\n${YELLOW}Test $TOTAL: File headers present${NC}"
-if grep -q "^--- .* ---$" dump.txt 2>/dev/null; then
+if grep -q "^--- .* ---$" "$TMPDIR/dump.txt" 2>/dev/null; then
     echo -e "${GREEN}✓ PASS${NC} (File headers found)"
 else
     echo -e "${RED}✗ FAIL${NC} (No file headers found)"
     ((FAILED++))
 fi
 
-# Test 10: Verify file footers are present
+# Test 12: Verify file footers are present
 ((TOTAL++))
 echo -e "\n${YELLOW}Test $TOTAL: File footers present${NC}"
-if grep -q "^--- End of .* ---$" dump.txt 2>/dev/null; then
+if grep -q "^--- End of .* ---$" "$TMPDIR/dump.txt" 2>/dev/null; then
     echo -e "${GREEN}✓ PASS${NC} (File footers found)"
 else
     echo -e "${RED}✗ FAIL${NC} (No file footers found)"

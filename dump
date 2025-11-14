@@ -20,7 +20,7 @@ EOF
 
 # Parse args: directory, output, file_types
 DIR=${1:-.}; shift
-OUT=${1:-dump.txt}; [[ "$OUT" == .* ]] && { OUT=dump.txt; } || shift
+OUT=${1:-$TMPDIR/dump.txt}; [[ "$OUT" == .* ]] && { OUT=$TMPDIR/dump.txt; } || shift
 TYPES=("$@")
 
 # Validate directory
@@ -28,6 +28,11 @@ TYPES=("$@")
 
 echo "📁 Dumping text files from '$DIR' to '$OUT'"
 [[ ${#TYPES[@]} -gt 0 ]] && echo "🎯 Filtering for: ${TYPES[*]}"
+
+# Prompt for confirmation
+read -p "Continue with these settings? (y/n) " -n 1 -r
+echo
+[[ ! "$REPLY" =~ ^[Yy]$ ]] && { echo "❌ Cancelled"; exit 0; }
 
 rm -f "$OUT"
 count=0
