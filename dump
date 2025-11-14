@@ -47,9 +47,10 @@ find "$DIR" -type f ! -name "$OUT" ! -name "dump" ! -name "*.py" ! -name "*.sh" 
     
     # Check if text file and process
     [[ $(file -b --mime-type "$file") == text/* ]] && {
+        abs_file="$(cd "$(dirname "$file")" && pwd)/$(basename "$file")"
         rel="${file#$DIR/}"; [[ "$rel" == "$file" ]] && rel="$(basename "$file")"
         echo "  ✓ $rel"
-        { echo "--- $(basename "$file") ($(dirname "$rel")) ---"; cat "$file"; echo "--- End of $(basename "$file") ---"; echo; } >> "$OUT"
+        { echo "--- $abs_file ---"; cat "$file"; echo "--- End of $abs_file ---"; echo; } >> "$OUT"
         ((count++))
     }
 done
