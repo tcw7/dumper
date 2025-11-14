@@ -1,0 +1,59 @@
+#!/bin/bash
+
+show_help() {
+    cat << 'EOF'
+📝 Text File Dumper - Combine all your text files into one
+
+Usage:
+  ./dump                       # Show this help
+  ./dump .                     # Dump current folder
+  ./dump notes/                # Dump 'notes' folder  
+  ./dump notes/ all.txt        # Custom output name
+  ./dump . backup.txt .txt .md # Only .txt and .md files
+
+Simple and friendly! 🚀
+EOF
+}
+
+# Show help if no args or -h
+[[ $# -eq 0 || "$1" == "-h" || "$1" == "--help" ]] && { show_help; [[ $# -eq 0 ]] && echo "💡 Run with arguments to dump files"; exit 0; }
+
+# Parse args: directory, output, file_types
+DIR=${1:-.}; shift
+OUT=${1:-$TMPDIR/dump.txt}; [[ "$OUT" == .* ]] && { OUT=$TMPDIR/dump.txt; } || shift
+TYPES=("$@")
+
+# Validate directory
+[[ ! -d "$DIR" ]] && { echo "❌ Directory '$DIR' not found"; exit 1; }
+
+echo "📁 Dumping text files from '$DIR' to '$OUT'"
+[[ ${#TYPES[@]} -gt 0 ]] && echo "🎯 Filtering for: ${TYPES[*]}"
+
+# Prompt for confirmation
+read -p "Continue with these settings? (y/n) " -n 1 -r
+echo
+[[ ! "$REPLY" =~ ^[Yy]$ ]] && { echo "❌ Cancelled"; exit 0; }
+
+rm -f "$OUT"
+count=0
+
+find "$DIR" -type f ! -name "$OUT" ! -name "dump" ! -name "*.py" ! -name "*.sh" | while read -r file; do
+    # Filter by types if specified
+    if [[ ${#TYPES[@]} -gt 0 ]]; then
+        match=false
+        for type in "${TYPES[@]}"; do [[ "$file" == *"$type" ]] && { match=true; break; }; done
+        [[ "$match" == false ]] && continue
+    fi
+    
+    # Check if text file and process
+    [[ $(file -b --mime-type "$file") == text/* ]] && {
+        abs_file="$(cd "$(dirname "$file")" && pwd)/$(basename "$file")"
+        rel="${file#$DIR/}"; [[ "$rel" == "$file" ]] && rel="$(basename "$file")"
+        echo "  ✓ $rel"
+        { echo "--- $abs_file ---"; cat "$file"; echo "--- End of $abs_file ---"; echo; } >> "$OUT"
+        ((count++))
+    }
+done
+
+[[ -f "$OUT" ]] && { count=$(grep -c "^--- .* ---$" "$OUT" 2>/dev/null || echo 0); echo "📄 Created '$OUT' with $count files"; } || echo "📄 No text files found"
+echo "🎉 Done!"
