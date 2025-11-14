@@ -1,0 +1,17 @@
+.DS*
+
+# Dump output files
+dump.txt
+*.dump
+all.txt
+combined.txt
+backup.txt
+
+# Raw text files in date directories
+On-My-Mac-*/
+*/*.txt
+
+# Other common output files
+output.txt
+notes.txt
+archive.txt
